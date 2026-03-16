@@ -16,6 +16,7 @@ from typing import List, Union, Optional
 import threading
 import os
 import numpy as np
+import traceback
 
 
 # ==============
@@ -192,10 +193,21 @@ class DashScopeEmbedding(EmbeddingModel):
                 "Content-Type": "application/json",
             }
             payload = {"model": self.model_name, "input": inputs}
+            if "11434" in url:
+                vecs = []
+                for item in inputs:
+                    payload = {"model": self.model_name, "prompt": item}
+                    resp = requests.post(url, headers=headers, json=payload, timeout=30)
+                    data = resp.json()
+                    vecs.append(np.array(data.get("embedding")))
+                if single:
+                    return vecs[0]
+                return vecs
             resp = requests.post(url, headers=headers, json=payload, timeout=30)
             if resp.status_code >= 400:
                 raise RuntimeError(f"Embedding REST 调用失败: {resp.status_code} {resp.text}")
             data = resp.json()
+            print(data)
             # 期望结构：{"data": [{"embedding": [...]}]}
             items = data.get("data") or []
             vecs = [np.array(item.get("embedding")) for item in items]
@@ -256,6 +268,7 @@ def create_embedding_model_with_fallback(preferred_type: str = "dashscope", **kw
         try:
             return create_embedding_model(t, **kwargs)
         except Exception:
+            traceback.print_exc()
             continue
     raise RuntimeError("所有嵌入模型都不可用，请安装依赖或检查配置")
 

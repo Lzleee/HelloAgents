@@ -1,0 +1,21 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant-agent
+    ports:
+      - "6333:6333"
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-agent
+    ports:
+      - "11434:11434"
+
+  neo4j:
+    image: neo4j:latest
+    container_name: neo4j-agent
+    ports:
+      - "7474:7474"  # Web UI
+      - "7687:7687"  # Bolt协议
+    environment:
+      - NEO4J_AUTH=neo4j/your-password
